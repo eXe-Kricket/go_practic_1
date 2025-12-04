@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
-	"time"
 )
 
 func main() {
@@ -19,12 +17,7 @@ func main() {
 			errorCount++
 			if errorCount >= 3 {
 				fmt.Println("Unable to fetch server statistic")
-				os.Stdout.Sync()
 			}
-			if resp != nil {
-				resp.Body.Close()
-			}
-			time.Sleep(60 * time.Second)
 			continue
 		}
 
@@ -33,9 +26,7 @@ func main() {
 			errorCount++
 			if errorCount >= 3 {
 				fmt.Println("Unable to fetch server statistic")
-				os.Stdout.Sync()
 			}
-			time.Sleep(60 * time.Second)
 			continue
 		}
 
@@ -45,9 +36,7 @@ func main() {
 			errorCount++
 			if errorCount >= 3 {
 				fmt.Println("Unable to fetch server statistic")
-				os.Stdout.Sync()
 			}
-			time.Sleep(60 * time.Second)
 			continue
 		}
 
@@ -56,62 +45,44 @@ func main() {
 		data := strings.TrimSpace(string(body))
 		parts := strings.Split(data, ",")
 		if len(parts) != 7 {
-			time.Sleep(60 * time.Second)
 			continue
 		}
 
 		// Парсим значения
-		la, _ := strconv.ParseFloat(parts[0], 64)
-		memTotal, _ := strconv.ParseFloat(parts[1], 64)
-		memUsed, _ := strconv.ParseFloat(parts[2], 64)
-		diskTotal, _ := strconv.ParseFloat(parts[3], 64)
-		diskUsed, _ := strconv.ParseFloat(parts[4], 64)
-		netTotal, _ := strconv.ParseFloat(parts[5], 64)
-		netUsed, _ := strconv.ParseFloat(parts[6], 64)
+		var vals [7]float64
+		for i, part := range parts {
+			v, _ := strconv.ParseFloat(strings.TrimSpace(part), 64)
+			vals[i] = v
+		}
 
-		hasOutput := false
+		la := vals[0]
+		memT := vals[1]
+		memU := vals[2]
+		diskT := vals[3]
+		diskU := vals[4]
+		netT := vals[5]
+		netU := vals[6]
 
-		// 1. Load Average > 30
+		// Load Average
 		if la > 30 {
 			fmt.Printf("Load Average is too high: %.0f\n", la)
-			hasOutput = true
 		}
 
-		// 2. Memory > 80%
-		if memTotal > 0 {
-			usage := memUsed / memTotal
-			if usage > 0.8 {
-				percent := int(usage * 100)
-				fmt.Printf("Memory usage too high: %d%%\n", percent)
-				hasOutput = true
-			}
+		// Memory
+		if memT > 0 && memU/memT > 0.8 {
+			fmt.Printf("Memory usage too high: %d%%\n", int(memU/memT*100))
 		}
 
-		// 3. Disk > 90%
-		if diskTotal > 0 {
-			usage := diskUsed / diskTotal
-			if usage >= 0.9 {
-				freeMB := int((diskTotal - diskUsed) / (1024 * 1024))
-				fmt.Printf("Free disk space is too low: %d Mb left\n", freeMB)
-				hasOutput = true
-			}
+		// Disk
+		if diskT > 0 && diskU/diskT >= 0.9 {
+			free := (diskT - diskU) / (1024 * 1024)
+			fmt.Printf("Free disk space is too low: %d Mb left\n", int(free))
 		}
 
-		// 4. Network > 90%
-		if netTotal > 0 {
-			usage := netUsed / netTotal
-			if usage > 0.9 {
-				freeMbits := int((netTotal - netUsed) / 1000000)
-				fmt.Printf("Network bandwidth usage high: %d Mbit/s available\n", freeMbits)
-				hasOutput = true
-			}
+		// Network
+		if netT > 0 && netU/netT > 0.9 {
+			free := (netT - netU) / 1000000
+			fmt.Printf("Network bandwidth usage high: %d Mbit/s available\n", int(free))
 		}
-
-		// Синхронизируем вывод
-		if hasOutput {
-			os.Stdout.Sync()
-		}
-
-		time.Sleep(60 * time.Second)
 	}
 }
