@@ -56,14 +56,21 @@ func main() {
 			continue
 		}
 
-		// Парсим значения
-		la, _ := strconv.ParseFloat(parts[0], 64)
-		memTotal, _ := strconv.ParseFloat(parts[1], 64)
-		memUsed, _ := strconv.ParseFloat(parts[2], 64)
-		diskTotal, _ := strconv.ParseFloat(parts[3], 64)
-		diskUsed, _ := strconv.ParseFloat(parts[4], 64)
-		netTotal, _ := strconv.ParseFloat(parts[5], 64)
-		netUsed, _ := strconv.ParseFloat(parts[6], 64)
+		// Парсим значения с проверкой ошибок
+		la, err1 := strconv.ParseFloat(parts[0], 64)
+		memTotal, err2 := strconv.ParseFloat(parts[1], 64)
+		memUsed, err3 := strconv.ParseFloat(parts[2], 64)
+		diskTotal, err4 := strconv.ParseFloat(parts[3], 64)
+		diskUsed, err5 := strconv.ParseFloat(parts[4], 64)
+		netTotal, err6 := strconv.ParseFloat(parts[5], 64)
+		netUsed, err7 := strconv.ParseFloat(parts[6], 64)
+
+		// Проверяем ошибки парсинга
+		if err1 != nil || err2 != nil || err3 != nil || err4 != nil ||
+			err5 != nil || err6 != nil || err7 != nil {
+			time.Sleep(60 * time.Second)
+			continue
+		}
 
 		// 1. Load Average > 30
 		if la > 30 {
@@ -72,25 +79,28 @@ func main() {
 
 		// 2. Memory > 80% (округляем вниз)
 		if memTotal > 0 {
-			if memUsed/memTotal > 0.8 {
-				percent := int(memUsed / memTotal * 100)
+			memUsage := memUsed / memTotal
+			if memUsage > 0.8 {
+				percent := int(memUsage * 100)
 				fmt.Printf("Memory usage too high: %d%%\n", percent)
 			}
 		}
 
 		// 3. Disk > 90% (округляем вниз)
 		if diskTotal > 0 {
-			if diskUsed/diskTotal > 0.9 {
+			diskUsage := diskUsed / diskTotal
+			if diskUsage > 0.9 {
 				freeMB := int((diskTotal - diskUsed) / (1024 * 1024))
 				fmt.Printf("Free disk space is too low: %d Mb left\n", freeMB)
 			}
 		}
 
-		// 4. Network > 90%
+		// 4. Network > 90% (в Mbit/s)
 		if netTotal > 0 {
-			if netUsed/netTotal > 0.9 {
-				freeMbits := (netTotal - netUsed)
-				fmt.Printf("Network bandwidth usage high: %d Mbit/s available\n", int(freeMbits))
+			netUsage := netUsed / netTotal
+			if netUsage > 0.9 {
+				freeMbits := netTotal - netUsed
+				fmt.Printf("Network bandwidth usage high: %.1f Mbit/s available\n", freeMbits)
 			}
 		}
 
