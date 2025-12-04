@@ -89,8 +89,7 @@ func main() {
 		// 4. Network > 90%
 		if netTotal > 0 {
 			if netUsed/netTotal > 0.9 {
-				// ВАЖНО: тест ожидает деление на 1,000,000, а не на 125,000
-				freeMbits := (netTotal - netUsed) / 1000000
+				freeMbits := (netTotal - netUsed)
 				fmt.Printf("Network bandwidth usage high: %d Mbit/s available\n", int(freeMbits))
 			}
 		}
