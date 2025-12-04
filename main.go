@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -63,11 +62,6 @@ func main() {
 
 		// Проверка метрик
 		checkMetrics(stats)
-
-		// Синхронизация вывода
-		if f, ok := os.Stdout.(*os.File); ok {
-			f.Sync()
-		}
 
 		// Ожидание перед следующим опросом
 		time.Sleep(pollInterval)
