@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -19,7 +18,7 @@ func main() {
 		if err != nil {
 			errorCount++
 			if errorCount >= 3 {
-				println("Unable to fetch server statistic")
+				fmt.Println("Unable to fetch server statistic")
 			}
 			time.Sleep(60 * time.Second)
 			continue
@@ -30,7 +29,7 @@ func main() {
 			resp.Body.Close()
 			errorCount++
 			if errorCount >= 3 {
-				println("Unable to fetch server statistic")
+				fmt.Println("Unable to fetch server statistic")
 			}
 			time.Sleep(60 * time.Second)
 			continue
@@ -42,7 +41,7 @@ func main() {
 		if err != nil {
 			errorCount++
 			if errorCount >= 3 {
-				println("Unable to fetch server statistic")
+				fmt.Println("Unable to fetch server statistic")
 			}
 			time.Sleep(60 * time.Second)
 			continue
@@ -71,14 +70,14 @@ func main() {
 
 		// Load Average
 		if la > 30 {
-			printf("Load Average is too high: %.0f\n", la)
+			fmt.Printf("Load Average is too high: %.0f\n", la)
 		}
 
 		// Memory
 		if memTotal > 0 {
 			usage := memUsed / memTotal
 			if usage > 0.8 {
-				printf("Memory usage too high: %.0f%%\n", usage*100)
+				fmt.Printf("Memory usage too high: %.0f%%\n", usage*100)
 			}
 		}
 
@@ -87,7 +86,7 @@ func main() {
 			usage := diskUsed / diskTotal
 			if usage > 0.9 {
 				freeMB := (diskTotal - diskUsed) / (1024 * 1024)
-				printf("Free disk space is too low: %.0f Mb left\n", freeMB)
+				fmt.Printf("Free disk space is too low: %.0f Mb left\n", freeMB)
 			}
 		}
 
@@ -96,26 +95,10 @@ func main() {
 			usage := netUsed / netTotal
 			if usage > 0.9 {
 				freeMbit := (netTotal - netUsed) / 125000
-				printf("Network bandwidth usage high: %.0f Mbit/s available\n", freeMbit)
+				fmt.Printf("Network bandwidth usage high: %.0f Mbit/s available\n", freeMbit)
 			}
 		}
 
 		time.Sleep(60 * time.Second)
 	}
-}
-
-// println и printf для вывода без буферизации
-func println(s string) {
-	print(s + "\n")
-}
-
-func printf(format string, args ...interface{}) {
-	print(format, args...)
-	print("\n")
-}
-
-func print(args ...interface{}) {
-	// Простой вывод
-	s := fmt.Sprint(args...)
-	os.Stdout.Write([]byte(s))
 }
